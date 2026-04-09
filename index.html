@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Card</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .profile-card { border: 1px solid #ccc; border-radius: 10px; padding: 20px; width: 300px; }
+        .visit-tracking { margin-top: 20px; }
+        .session-timer { margin-top: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="profile-card">
+        <h1>Your Profile</h1>
+        <p>Name: Anxo121</p>
+        <p>Email: your-email@example.com</p>
+        <div class="visit-tracking">
+            <p>Visits: <span id="visit-count">0</span></p>
+        </div>
+        <div class="session-timer">
+            Session time: <span id="session-time">0 seconds</span>
+        </div>
+    </div>
+    <script>
+        let visitCount = 0;
+        let sessionTime = 0;
+        
+        function updateVisitCount() {
+            visitCount++;
+            document.getElementById('visit-count').innerText = visitCount;
+        }
+        
+        function startSessionTimer() {
+            setInterval(() => {
+                sessionTime++;
+                document.getElementById('session-time').innerText = sessionTime + ' seconds';
+            }, 1000);
+        }
+        
+        updateVisitCount();
+        startSessionTimer();
+    </script>
+</body>
+</html>
