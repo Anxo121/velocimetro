@@ -65,6 +65,30 @@
 <script>
 /* --- TODO TU CÓDIGO ORIGINAL DEL SIMULADOR AQUÍ --- */
 /* (NO LO REPITO PARA NO SUPERAR LÍMITES, PERO ESTÁ INTACTO) */
+/* === CONTROLES DE TECLADO === */
+window.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowUp") acelerando = true;
+    if (e.key === "ArrowDown") frenando = true;
+    if (e.key === "ArrowLeft" && gear > 0 && !autoTransmission) gear--;
+    if (e.key === "ArrowRight" && gear < 5 && !autoTransmission) gear++;
+});
+
+window.addEventListener("keyup", (e) => {
+    if (e.key === "ArrowUp") acelerando = false;
+    if (e.key === "ArrowDown") frenando = false;
+});
+
+/* === CLICK / TAP EN EL CANVAS PARA ACELERAR === */
+canvas.addEventListener("mousedown", () => acelerando = true);
+canvas.addEventListener("mouseup", () => acelerando = false);
+canvas.addEventListener("mouseleave", () => acelerando = false);
+
+/* === TOUCH PARA MÓVIL === */
+canvas.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    acelerando = true;
+});
+canvas.addEventListener("touchend", () => acelerando = false);
 </script>
 
 <!-- SCRIPT DEL CONTADOR -->
