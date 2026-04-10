@@ -1,592 +1,144 @@
-<!doctype html>
-<html class="h-full">
- <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Driving Simulator PRO</title>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&amp;family=Rajdhani:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
-  <style>
-    html, body { height: 100%; margin: 0; }
-    body { box-sizing: border-box; }
-  </style>
-  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
-  <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
- </head>
- <body class="h-full overflow-auto" style="background: #0a0a0f; font-family: 'Rajdhani', sans-serif;">
-  <div id="app-wrapper" class="w-full min-h-full flex flex-col items-center justify-center p-4" style="background: radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0a0a0f 70%);">
-   <h1 id="main-title" class="text-3xl md:text-4xl font-bold tracking-widest mb-6" style="font-family: 'Orbitron', monospace; color: #e74c3c; text-shadow: 0 0 20px rgba(231,76,60,0.4);">SIMULATOR PRO</h1>
-   <div class="relative w-full" style="max-width: 750px;">
-    <canvas id="panel" class="w-full rounded-2xl" style="background: linear-gradient(180deg, #151520 0%, #0d0d15 100%); border: 1px solid rgba(255,255,255,0.06); box-shadow: 0 0 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.03);"></canvas>
-   </div><!-- Odometer -->
-   <div class="mt-5 px-6 py-3 rounded-xl" style="background: #0f0f18; border: 1px solid rgba(255,255,255,0.06);">
-    <div class="flex items-center gap-3">
-     <span class="text-xs tracking-widest uppercase" style="color: #555; font-family: 'Orbitron', monospace;">ODO</span>
-     <div id="odometer" class="text-2xl tracking-[0.3em]" style="font-family: 'Orbitron', monospace; color: #0f0;">
-      000000.000
-     </div><span class="text-xs" style="color: #555;">km</span>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>SIMULATOR PRO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    background: #111;
+    color: white;
+    font-family: Arial;
+    margin: 0;
+    overflow: hidden;
+}
+
+/* Panel del simulador */
+#container {
+    text-align: center;
+    margin-top: 40px;
+}
+
+/* Perfil arriba derecha */
+#perfil-info {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.6);
+    padding: 12px 18px;
+    border-radius: 10px;
+    color: #fff;
+    font-family: Arial;
+    text-align: right;
+    z-index: 9999;
+    font-size: 14px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- PERFIL ARRIBA DERECHA -->
+<div id="perfil-info">
+    <div><strong>Tiempo aquí:</strong> <span id="tiempo-uso">0s</span></div>
+    <div><strong>Total acumulado:</strong> <span id="tiempo-total">0s</span></div>
+    <div><strong>Entradas:</strong> <span id="contador-entradas">0</span></div>
+</div>
+
+<!-- TU SIMULADOR ORIGINAL -->
+<div id="container">
+    <h1>SIMULATOR PRO</h1>
+
+    <p>Velocidad: <span id="vel">0</span> km/h</p>
+    <p>RPM: <span id="rpm">0</span></p>
+    <p>Marcha: <span id="gear">N</span></p>
+
+    <div>
+        <button onclick="shiftDown()">◀</button>
+        <button onclick="accelerate()">▲</button>
+        <button onclick="brake()">▼</button>
+        <button onclick="shiftUp()">▶</button>
     </div>
-   </div><!-- Info strip -->
-   <div class="mt-4 flex flex-wrap justify-center gap-6 text-sm" style="color: #888; font-family: 'Orbitron', monospace;">
-    <div><span style="color:#555;">VEL</span> <span id="vel" style="color:#e74c3c;">0</span> <span style="color:#444;">km/h</span>
-    </div>
-    <div><span style="color:#555;">RPM</span> <span id="rpm" style="color:#f39c12;">0</span>
-    </div>
-    <div><span style="color:#555;">GEAR</span> <span id="gear" style="color:#3498db;">1</span>
-    </div>
-   </div><!-- Controls hint --> <!-- Controls hint -->
-   <div class="mt-6 flex flex-wrap justify-center gap-3 text-xs" style="color: #444; font-family: 'Rajdhani', sans-serif;">
-    <div class="flex items-center gap-1"><kbd class="px-2 py-1 rounded" style="background:#1a1a25; border:1px solid #2a2a35;">↑</kbd> Acelerar
-    </div>
-    <div class="flex items-center gap-1"><kbd class="px-2 py-1 rounded" style="background:#1a1a25; border:1px solid #2a2a35;">↓</kbd> Frenar
-    </div>
-    <div class="flex items-center gap-1"><kbd class="px-2 py-1 rounded" style="background:#1a1a25; border:1px solid #2a2a35;">←→</kbd> Marchas
-    </div>
-   </div><!-- Color picker panel -->
-   <div id="colors-panel" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50" style="backdrop-filter: blur(4px);">
-    <div class="bg-gray-900 rounded-2xl p-6 max-w-sm w-full" style="background: linear-gradient(180deg, #1a1a2e 0%, #0d0d15 100%); border: 1px solid rgba(255,255,255,0.1);">
-     <h2 class="text-xl font-bold tracking-widest mb-6" style="font-family: 'Orbitron', monospace; color: #e74c3c;">COLORS</h2>
-     <div class="space-y-4">
-      <div class="flex items-center justify-between">
-       <label class="text-sm tracking-widest" style="color: #888;">RPM GAUGE</label>
-       <div class="flex items-center gap-2">
-        <input type="color" id="rpm-color-input" value="#f39c12" class="w-12 h-10 rounded cursor-pointer"> <span id="rpm-color-hex" class="text-xs font-mono" style="color: #aaa; min-width: 70px;">#f39c12</span>
-       </div>
-      </div>
-      <div class="flex items-center justify-between">
-       <label class="text-sm tracking-widest" style="color: #888;">SPEED GAUGE</label>
-       <div class="flex items-center gap-2">
-        <input type="color" id="speed-color-input" value="#e74c3c" class="w-12 h-10 rounded cursor-pointer"> <span id="speed-color-hex" class="text-xs font-mono" style="color: #aaa; min-width: 70px;">#e74c3c</span>
-       </div>
-      </div>
-      <div class="flex items-center justify-between">
-       <label class="text-sm tracking-widest" style="color: #888;">ODOMETER</label>
-       <div class="flex items-center gap-2">
-        <input type="color" id="odometer-color-input" value="#00ff00" class="w-12 h-10 rounded cursor-pointer"> <span id="odometer-color-hex" class="text-xs font-mono" style="color: #aaa; min-width: 70px;">#00ff00</span>
-       </div>
-      </div>
-     </div><button id="close-colors-btn" class="mt-6 w-full px-4 py-2 rounded-lg font-bold tracking-widest uppercase text-sm transition-all" style="background: rgba(52,152,219,0.2); border: 2px solid rgba(52,152,219,0.5); color: #3498db; cursor:pointer;">CLOSE</button>
-    </div>
-   </div><!-- Control buttons -->
-   <div class="mt-4 flex gap-2 flex-wrap justify-center items-center">
-    <button id="colors-btn" class="px-6 py-3 rounded-xl font-bold tracking-widest uppercase text-sm transition-all" style="background:#0f0f18; border:2px solid rgba(157,48,48,0.3); color:#888; cursor:pointer;"> Colors </button> <button id="auto-trans-btn" class="px-6 py-3 rounded-xl font-bold tracking-widest uppercase text-sm transition-all" style="background:#0f0f18; border:2px solid rgba(52,152,219,0.3); color:#888; cursor:pointer;"> Auto: OFF </button> <button id="cruise-btn" class="px-6 py-3 rounded-xl font-bold tracking-widest uppercase text-sm transition-all" style="background:#0f0f18; border:2px solid rgba(46,204,113,0.3); color:#888; cursor:pointer;"> Cruise: OFF </button> <button id="boost-btn" class="px-6 py-3 rounded-xl font-bold tracking-widest uppercase text-sm transition-all" style="background:#0f0f18; border:2px solid rgba(255,107,107,0.3); color:#888; cursor:pointer;"> Boost: OFF </button>
-   </div><!-- Touch controls for mobile -->
-   <div class="mt-4 flex gap-3 md:hidden">
-    <button id="btn-left" class="w-14 h-14 rounded-xl flex items-center justify-center text-xl font-bold" style="background:#1a1a25; border:1px solid #2a2a35; color:#3498db;">◀</button> <button id="btn-up" class="w-14 h-14 rounded-xl flex items-center justify-center text-xl font-bold" style="background:#1a1a25; border:1px solid #2a2a35; color:#2ecc71;">▲</button> <button id="btn-down" class="w-14 h-14 rounded-xl flex items-center justify-center text-xl font-bold" style="background:#1a1a25; border:1px solid #2a2a35; color:#e74c3c;">▼</button> <button id="btn-right" class="w-14 h-14 rounded-xl flex items-center justify-center text-xl font-bold" style="background:#1a1a25; border:1px solid #2a2a35; color:#3498db;">▶</button>
-   </div>
-  </div>
-  <script>
-// Simple localStorage fallback for web version
-const dataStore = {
-  save: async (data) => {
-    try {
-      let records = JSON.parse(localStorage.getItem('simulator_data') || '[]');
-      records.push(data);
-      localStorage.setItem('simulator_data', JSON.stringify(records));
-      return { isOk: true };
-    } catch (e) {
-      return { isOk: false, error: e };
-    }
-  }
-};
+</div>
 
-// --- Simulator Logic ---
-const canvas = document.getElementById("panel");
-const ctx = canvas.getContext("2d");
-
-let accentColor = "#e74c3c";
-let gaugeColor = "#f39c12";
-let textColorCfg = "#cccccc";
-let surfaceColorCfg = "#151520";
-
-let velocidad = 0, velocidadObjetivo = 0, rpm = 800, km = 0;
-let maxSpeedRecord = 0, maxRpmRecord = 0;
-const maxVel = 320, maxRPM = 10000;
-let sessionId = Math.random().toString(36).substr(2, 9);
-let consumption = 6; // Current consumption value (smoothed)
-let boost = false; // Boost mode flag
-let rpmGaugeColor = "#f39c12"; // RPM gauge color
-let speedGaugeColor = "#e74c3c"; // Speed gauge color
-let odometerColor = "#0f0"; // Odometer color
-
-// Load saved progress
-function loadProgress() {
-  if (window.dataSdk && typeof window.dataSdk.init === 'function') {
-    // Will load via Data SDK handler
-  } else {
-    const saved = JSON.parse(localStorage.getItem('simulator_total_data') || '{}');
-    if (saved.km_total) km = saved.km_total;
-    if (saved.max_speed) maxSpeedRecord = saved.max_speed;
-    if (saved.max_rpm) maxRpmRecord = saved.max_rpm;
-  }
-}
-
-const gears = [
-  { max: 50, acc: 1.2 }, { max: 100, acc: 1.0 }, { max: 150, acc: 0.9 },
-  { max: 210, acc: 0.7 }, { max: 270, acc: 0.5 }, { max: 320, acc: 0.3 }
-];
-let gear = 0, acelerando = false, frenando = false, autoTransmission = false;
-let cruiseControl = false, cruiseSpeed = 0;
-
-// Initialize Data SDK only if available
-(async () => {
-  if (window.dataSdk && typeof window.dataSdk.init === 'function') {
-    const dataHandler = {
-      onDataChanged(data) {
-        if (data && data.length > 0) {
-          const latest = data[data.length - 1];
-          km = latest.km_total || 0;
-          maxSpeedRecord = latest.max_speed || 0;
-          maxRpmRecord = latest.max_rpm || 0;
-        }
-      }
-    };
-    const initResult = await window.dataSdk.init(dataHandler);
-    if (!initResult.isOk) {
-      console.error("Failed to initialize Data SDK");
-    }
-  } else {
-    loadProgress();
-  }
-})();
-
-document.addEventListener("keydown", (e) => {
-  if (e.key === "ArrowUp") { acelerando = true; e.preventDefault(); }
-  if (e.key === "ArrowDown") { frenando = true; e.preventDefault(); }
-  if (e.key === "ArrowRight" && gear < 5 && !autoTransmission) gear++;
-  if (e.key === "ArrowLeft" && gear > 0 && !autoTransmission) gear--;
-});
-document.addEventListener("keyup", (e) => {
-  if (e.key === "ArrowUp") acelerando = false;
-  if (e.key === "ArrowDown") frenando = false;
-});
-
-// Auto transmission toggle button
-const autoBtn = document.getElementById('auto-trans-btn');
-autoBtn.addEventListener('click', () => {
-  autoTransmission = !autoTransmission;
-  autoBtn.style.color = autoTransmission ? '#3498db' : '#888';
-  autoBtn.style.borderColor = autoTransmission ? 'rgba(52,152,219,0.8)' : 'rgba(52,152,219,0.3)';
-  autoBtn.style.background = autoTransmission ? 'rgba(52,152,219,0.1)' : '#0f0f18';
-  autoBtn.innerText = autoTransmission ? 'Auto: ON' : 'Auto: OFF';
-  localStorage.setItem('simulator_auto_trans', autoTransmission);
-});
-// Load auto transmission state
-if (localStorage.getItem('simulator_auto_trans') === 'true') {
-  autoTransmission = true;
-  autoBtn.style.color = '#3498db';
-  autoBtn.style.borderColor = 'rgba(52,152,219,0.8)';
-  autoBtn.style.background = 'rgba(52,152,219,0.1)';
-  autoBtn.innerText = 'Auto: ON';
-}
-
-// Cruise control toggle button
-const cruiseBtn = document.getElementById('cruise-btn');
-cruiseBtn.addEventListener('click', () => {
-  cruiseControl = !cruiseControl;
-  if (cruiseControl) {
-    cruiseSpeed = velocidad; // Set current speed as target
-    cruiseBtn.style.color = '#2ecc71';
-    cruiseBtn.style.borderColor = 'rgba(46,204,113,0.8)';
-    cruiseBtn.style.background = 'rgba(46,204,113,0.1)';
-    cruiseBtn.innerText = `Cruise: ON (${Math.round(cruiseSpeed)}km/h)`;
-  } else {
-    cruiseBtn.style.color = '#888';
-    cruiseBtn.style.borderColor = 'rgba(46,204,113,0.3)';
-    cruiseBtn.style.background = '#0f0f18';
-    cruiseBtn.innerText = 'Cruise: OFF';
-  }
-  localStorage.setItem('simulator_cruise_control', cruiseControl);
-});
-
-// Load cruise control state
-if (localStorage.getItem('simulator_cruise_control') === 'true') {
-  cruiseControl = true;
-  cruiseSpeed = 100;
-  cruiseBtn.style.color = '#2ecc71';
-  cruiseBtn.style.borderColor = 'rgba(46,204,113,0.8)';
-  cruiseBtn.style.background = 'rgba(46,204,113,0.1)';
-  cruiseBtn.innerText = `Cruise: ON (${Math.round(cruiseSpeed)}km/h)`;
-}
-
-// Boost button
-const boostBtn = document.getElementById('boost-btn');
-boostBtn.addEventListener('click', () => {
-  boost = !boost;
-  boostBtn.style.color = boost ? '#ff6b6b' : '#888';
-  boostBtn.style.borderColor = boost ? 'rgba(255,107,107,0.8)' : 'rgba(255,107,107,0.3)';
-  boostBtn.style.background = boost ? 'rgba(255,107,107,0.1)' : '#0f0f18';
-  boostBtn.innerText = boost ? 'Boost: ON' : 'Boost: OFF';
-  localStorage.setItem('simulator_boost', boost);
-});
-
-// Load boost state
-if (localStorage.getItem('simulator_boost') === 'true') {
-  boost = true;
-  boostBtn.style.color = '#ff6b6b';
-  boostBtn.style.borderColor = 'rgba(255,107,107,0.8)';
-  boostBtn.style.background = 'rgba(255,107,107,0.1)';
-  boostBtn.innerText = 'Boost: ON';
-}
-
-// Color picker buttons
-const rpmColorBtn = document.getElementById('rpm-color-input');
-const speedColorBtn = document.getElementById('speed-color-input');
-const odometerColorBtn = document.getElementById('odometer-color-input');
-const colorsPanel = document.getElementById('colors-panel');
-const colorsPanelBtn = document.getElementById('colors-btn');
-const closeColorsBtn = document.getElementById('close-colors-btn');
-
-// Open/close color panel
-colorsPanelBtn.addEventListener('click', () => {
-  colorsPanel.classList.remove('hidden');
-});
-
-closeColorsBtn.addEventListener('click', () => {
-  colorsPanel.classList.add('hidden');
-});
-
-// Close panel when clicking outside
-colorsPanel.addEventListener('click', (e) => {
-  if (e.target === colorsPanel) {
-    colorsPanel.classList.add('hidden');
-  }
-});
-
-// Update colors in real-time
-rpmColorBtn.addEventListener('input', (e) => {
-  rpmGaugeColor = e.target.value;
-  document.getElementById('rpm-color-hex').textContent = rpmGaugeColor;
-  localStorage.setItem('simulator_rpm_color', rpmGaugeColor);
-});
-
-speedColorBtn.addEventListener('input', (e) => {
-  speedGaugeColor = e.target.value;
-  document.getElementById('speed-color-hex').textContent = speedGaugeColor;
-  localStorage.setItem('simulator_speed_color', speedGaugeColor);
-});
-
-odometerColorBtn.addEventListener('input', (e) => {
-  odometerColor = e.target.value;
-  document.getElementById('odometer-color-hex').textContent = odometerColor;
-  document.getElementById('odometer').style.color = odometerColor;
-  localStorage.setItem('simulator_odometer_color', odometerColor);
-});
-
-// Load saved colors
-if (localStorage.getItem('simulator_rpm_color')) {
-  rpmGaugeColor = localStorage.getItem('simulator_rpm_color');
-  rpmColorBtn.value = rpmGaugeColor;
-  document.getElementById('rpm-color-hex').textContent = rpmGaugeColor;
-}
-if (localStorage.getItem('simulator_speed_color')) {
-  speedGaugeColor = localStorage.getItem('simulator_speed_color');
-  speedColorBtn.value = speedGaugeColor;
-  document.getElementById('speed-color-hex').textContent = speedGaugeColor;
-}
-if (localStorage.getItem('simulator_odometer_color')) {
-  odometerColor = localStorage.getItem('simulator_odometer_color');
-  odometerColorBtn.value = odometerColor;
-  document.getElementById('odometer-color-hex').textContent = odometerColor;
-  document.getElementById('odometer').style.color = odometerColor;
-}
-
-// Mobile touch controls
-['btn-up','btn-down','btn-left','btn-right'].forEach(id => {
-  const el = document.getElementById(id);
-  if (!el) return;
-  const start = (e) => { e.preventDefault(); if(id==='btn-up') acelerando=true; if(id==='btn-down') frenando=true; if(id==='btn-left'&&gear>0&&!autoTransmission) gear--; if(id==='btn-right'&&gear<5&&!autoTransmission) gear++; };
-  const end = () => { if(id==='btn-up') acelerando=false; if(id==='btn-down') frenando=false; };
-  el.addEventListener('mousedown', start); el.addEventListener('touchstart', start);
-  el.addEventListener('mouseup', end); el.addEventListener('touchend', end);
-  el.addEventListener('mouseleave', end);
-});
-
-function resizeCanvas() {
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width * window.devicePixelRatio;
-  canvas.height = (rect.width * 0.5) * window.devicePixelRatio;
-  canvas.style.height = (rect.width * 0.5) + 'px';
-  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-}
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
-
-function drawGauge(cx, cy, r, maxValue, value, color, label, unit) {
-  const w = canvas.width / window.devicePixelRatio;
-  const startAngle = Math.PI * 0.75;
-  const endAngle = Math.PI * 2.25;
-  const totalArc = endAngle - startAngle;
-
-  // Background arc
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, startAngle, endAngle);
-  ctx.strokeStyle = "rgba(255,255,255,0.06)";
-  ctx.lineWidth = r * 0.12;
-  ctx.lineCap = "round";
-  ctx.stroke();
-
-  // Value arc
-  const valAngle = startAngle + (value / maxValue) * totalArc;
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, startAngle, valAngle);
-  ctx.strokeStyle = color;
-  ctx.lineWidth = r * 0.12;
-  ctx.lineCap = "round";
-  ctx.stroke();
-
-  // Glow
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, startAngle, valAngle);
-  ctx.strokeStyle = color + "33";
-  ctx.lineWidth = r * 0.25;
-  ctx.stroke();
-
-  // Tick marks - for RPM show 1-10, for speed show every 40
-  const isRPM = maxValue === 10000;
-  const step = isRPM ? 1000 : 40;
-  const bigStep = step;
-  ctx.fillStyle = "rgba(255,255,255,0.3)";
-  ctx.font = `${r * 0.13}px Orbitron, monospace`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-
-  for (let i = 0; i <= maxValue; i += step) {
-    const a = startAngle + (i / maxValue) * totalArc;
-    const inner = r - r * 0.25;
-    const outer = r - r * 0.15;
-    ctx.beginPath();
-    ctx.moveTo(cx + Math.cos(a) * inner, cy + Math.sin(a) * inner);
-    ctx.lineTo(cx + Math.cos(a) * outer, cy + Math.sin(a) * outer);
-    ctx.strokeStyle = "rgba(255,255,255,0.15)";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    if (i % bigStep === 0) {
-      const tx = cx + Math.cos(a) * (r - r * 0.38);
-      const ty = cy + Math.sin(a) * (r - r * 0.38);
-      ctx.fillStyle = "rgba(255,255,255,0.35)";
-      const displayVal = isRPM ? (i / 1000) : i;
-      ctx.fillText(displayVal, tx, ty);
-    }
-  }
-
-  // Needle
-  const needleLen = r * 0.65;
-  ctx.beginPath();
-  ctx.moveTo(cx, cy);
-  ctx.lineTo(cx + Math.cos(valAngle) * needleLen, cy + Math.sin(valAngle) * needleLen);
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 2.5;
-  ctx.lineCap = "round";
-  ctx.stroke();
-
-  // Center dot
-  ctx.beginPath();
-  ctx.arc(cx, cy, r * 0.06, 0, Math.PI * 2);
-  ctx.fillStyle = color;
-  ctx.fill();
-
-  // Digital value
-  ctx.font = `bold ${r * 0.28}px Orbitron, monospace`;
-  ctx.fillStyle = color;
-  ctx.textAlign = "center";
-  ctx.fillText(Math.round(value), cx, cy + r * 0.35);
-
-  // Label
-  ctx.font = `${r * 0.11}px Rajdhani, sans-serif`;
-  ctx.fillStyle = "rgba(255,255,255,0.25)";
-  ctx.fillText(label, cx, cy + r * 0.52);
-
-  // Red zone for RPM (8-10)
-  if (isRPM) {
-    const redStart = startAngle + (8000 / maxValue) * totalArc;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r + r * 0.02, redStart, endAngle);
-    ctx.strokeStyle = "rgba(231,76,60,0.3)";
-    ctx.lineWidth = r * 0.04;
-    ctx.stroke();
-  }
-}
-
-function drawGearIndicator(x, y) {
-  const gearLabels = ['1','2','3','4','5','6'];
-  const boxW = 28, gap = 4;
-  const totalW = gearLabels.length * (boxW + gap) - gap;
-  const startX = x - totalW / 2;
-
-  gearLabels.forEach((g, i) => {
-    const bx = startX + i * (boxW + gap);
-    ctx.fillStyle = i === gear ? "rgba(52,152,219,0.3)" : "rgba(255,255,255,0.03)";
-    ctx.beginPath();
-    ctx.roundRect(bx, y, boxW, boxW, 4);
-    ctx.fill();
-
-    if (i === gear) {
-      ctx.strokeStyle = "#3498db";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.roundRect(bx, y, boxW, boxW, 4);
-      ctx.stroke();
-    }
-
-    ctx.font = `bold 14px Orbitron, monospace`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = i === gear ? "#3498db" : "rgba(255,255,255,0.15)";
-    ctx.fillText(g, bx + boxW / 2, y + boxW / 2);
-  });
-}
-
-function drawConsumptionGauge(x, y, consumption) {
-  // Consumption in L/100km format
-  const displayValue = consumption.toFixed(1);
-  
-  // Box background
-  ctx.fillStyle = "rgba(255,255,255,0.03)";
-  ctx.beginPath();
-  ctx.roundRect(x - 60, y - 25, 120, 50, 4);
-  ctx.fill();
-  
-  // Border
-  ctx.strokeStyle = "rgba(255,255,255,0.1)";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.roundRect(x - 60, y - 25, 120, 50, 4);
-  ctx.stroke();
-  
-  // Label
-  ctx.font = `bold 10px Rajdhani, sans-serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillStyle = "rgba(255,255,255,0.4)";
-  ctx.fillText("CONSUMO", x, y - 10);
-  
-  // Value
-  ctx.font = `bold 16px Orbitron, monospace`;
-  ctx.fillStyle = "#2ecc71";
-  ctx.fillText(`${displayValue}`, x, y + 8);
-  
-  // Unit
-  ctx.font = `bold 9px Rajdhani, sans-serif`;
-  ctx.fillStyle = "rgba(255,255,255,0.3)";
-  ctx.fillText("L/100km", x, y + 18);
-}
+<script>
+// ------------------------------
+// LÓGICA DEL SIMULADOR
+// ------------------------------
+let speed = 0;
+let rpm = 0;
+let gear = 0;
 
 function update() {
-  const g = gears[gear];
-  
-  // Cruise control logic
-  if (cruiseControl && !frenando) {
-    if (velocidad < cruiseSpeed) velocidadObjetivo += g.acc * 0.5;
-    if (velocidad > cruiseSpeed) velocidadObjetivo -= 1;
-  } else {
-    if (acelerando && velocidad < g.max) velocidadObjetivo += g.acc * (boost ? 1.8 : 1);
-    if (frenando) velocidadObjetivo -= 3;
-  }
-  
-  velocidadObjetivo -= 0.08;
-  if (velocidadObjetivo < 0) velocidadObjetivo = 0;
-  if (velocidadObjetivo > g.max) velocidadObjetivo = g.max;
-  velocidad += (velocidadObjetivo - velocidad) * 0.03;
-
-  // Auto transmission logic
-  if (autoTransmission) {
-    if (velocidad > g.max * 0.9 && gear < 5) gear++;
-    if (velocidad < g.max * 0.4 && gear > 0) gear--;
-  }
-
-  let ratio = velocidad / g.max;
-  let rpmObjetivo = 800 + ratio * (maxRPM - 1200);
-  if (acelerando) rpmObjetivo += 800;
-  rpm += (rpmObjetivo - rpm) * 0.1;
-  rpm = Math.max(800, Math.min(maxRPM, rpm));
-
-  // Track records
-  if (velocidad > maxSpeedRecord) maxSpeedRecord = velocidad;
-  if (rpm > maxRpmRecord) maxRpmRecord = rpm;
-
-  km += velocidad / 36000; // km increases faster - 5x speed multiplier
-  
-  // Calculate fuel consumption (L/100km) - based on throttle/acceleration, not speed
-  let throttleInput = 0;
-  if (cruiseControl && !frenando) {
-    throttleInput = Math.abs(velocidadObjetivo - velocidad) / g.max * 0.5;
-  } else if (acelerando) {
-    throttleInput = boost ? 1.0 : 0.8;
-  } else if (frenando) {
-    throttleInput = 0.3;
-  }
-  const targetConsumption = Math.min(30, throttleInput * 25 + (rpm / maxRPM) * 5);
-  // Smooth consumption gradually instead of jumping
-  consumption += (targetConsumption - consumption) * 0.05;
-
-  // Draw
-  const w = canvas.width / window.devicePixelRatio;
-  const h = canvas.height / window.devicePixelRatio;
-  ctx.clearRect(0, 0, w, h);
-
-  const gaugeR = Math.min(w * 0.17, h * 0.38);
-  const rpmCx = w * 0.3, speedCx = w * 0.7, gaugeCy = h * 0.45;
-
-  drawGauge(rpmCx, gaugeCy, gaugeR, maxRPM, rpm, rpmGaugeColor, "RPM", "");
-  drawGauge(speedCx, gaugeCy, gaugeR, maxVel, velocidad, speedGaugeColor, "KM/H", "");
-  drawGearIndicator(w * 0.5, h * 0.82);
-  drawConsumptionGauge(w * 0.75, h * 0.82, consumption);
-
-  document.getElementById("vel").innerText = velocidad.toFixed(0);
-  document.getElementById("rpm").innerText = rpm.toFixed(0);
-  document.getElementById("gear").innerText = gear + 1;
-  
-  // Format odometer without leading zeros
-  const kmFormatted = km.toFixed(3);
-  const kmParts = kmFormatted.split('.');
-  const kmInteger = parseInt(kmParts[0]).toString();
-  const kmDecimals = kmParts[1];
-  document.getElementById("odometer").innerText = kmInteger + '.' + kmDecimals;
-
-  // Auto-save every 2 seconds
-  if (!window.lastSaveTime) window.lastSaveTime = Date.now();
-  if (Date.now() - window.lastSaveTime > 2000) {
-    saveProgress();
-    window.lastSaveTime = Date.now();
-  }
-
-  requestAnimationFrame(update);
+    document.getElementById("vel").textContent = speed;
+    document.getElementById("rpm").textContent = rpm;
+    document.getElementById("gear").textContent = gear === 0 ? "N" : gear;
 }
 
-async function saveProgress() {
-  const progressData = {
-    session_id: sessionId,
-    km_total: parseFloat(km.toFixed(3)),
-    max_speed: Math.round(maxSpeedRecord),
-    max_rpm: Math.round(maxRpmRecord),
-    last_gear: gear + 1,
-    timestamp: new Date().toISOString()
-  };
-
-  // Try Data SDK first (Canva), fallback to localStorage (web)
-  if (window.dataSdk && typeof window.dataSdk.create === 'function') {
-    const result = await window.dataSdk.create(progressData);
-    if (!result.isOk) {
-      console.error("Error saving progress:", result.error);
-    }
-  } else {
-    // Save total data to localStorage
-    localStorage.setItem('simulator_total_data', JSON.stringify({
-      km_total: parseFloat(km.toFixed(3)),
-      max_speed: Math.round(maxSpeedRecord),
-      max_rpm: Math.round(maxRpmRecord)
-    }));
-  }
+function accelerate() {
+    speed += 2;
+    rpm += 150;
+    update();
 }
 
-update();
-lucide.createIcons();
+function brake() {
+    speed = Math.max(0, speed - 3);
+    rpm = Math.max(0, rpm - 200);
+    update();
+}
 
-// Save progress when leaving the page
-window.addEventListener('beforeunload', saveProgress);
+function shiftUp() {
+    gear++;
+    update();
+}
+
+function shiftDown() {
+    gear = Math.max(0, gear - 1);
+    update();
+}
+
+// ------------------------------
+// PERFIL: TIEMPO Y ENTRADAS
+// ------------------------------
+
+function formatearTiempo(segundos) {
+    let h = Math.floor(segundos / 3600);
+    let m = Math.floor((segundos % 3600) / 60);
+    let s = segundos % 60;
+
+    let texto = "";
+    if (h > 0) texto += h + "h ";
+    if (m > 0) texto += m + "m ";
+    texto += s + "s";
+
+    return texto.trim();
+}
+
+// Contador de entradas
+let visitas = localStorage.getItem("contadorEntradas");
+visitas = visitas ? parseInt(visitas) + 1 : 1;
+localStorage.setItem("contadorEntradas", visitas);
+document.getElementById("contador-entradas").textContent = visitas;
+
+// Tiempo acumulado
+let tiempoTotal = localStorage.getItem("tiempoTotal");
+tiempoTotal = tiempoTotal ? parseInt(tiempoTotal) : 0;
+document.getElementById("tiempo-total").textContent = formatearTiempo(tiempoTotal);
+
+// Tiempo de la visita actual
+let segundos = 0;
+
+setInterval(() => {
+    segundos++;
+
+    document.getElementById("tiempo-uso").textContent = formatearTiempo(segundos);
+
+    localStorage.setItem("tiempoTotal", tiempoTotal + segundos);
+    document.getElementById("tiempo-total").textContent = formatearTiempo(tiempoTotal + segundos);
+
+}, 1000);
 </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ea08697e596ec9a',t:'MTc3NTgxMTI1NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+
+</body>
 </html>
